@@ -1,35 +1,25 @@
-import java.time.LocalDate;
-import model.*;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
-public class Main {
+public class Main extends Application {
+
+    @Override
+    public void start(Stage stage) throws Exception {
+
+        FXMLLoader fxmlLoader = new FXMLLoader(
+                getClass().getResource("/view/main-view.fxml")
+        );
+
+        Scene scene = new Scene(fxmlLoader.load());
+
+        stage.setTitle("EcoWallet");
+        stage.setScene(scene);
+        stage.show();
+    }
+
     public static void main(String[] args) {
-
-        GerenciadorFinancas gerenciador = new GerenciadorFinancas();
-
-        Transacao salario = TransacaoFactory.criarTransacao(
-                "Receita",
-                "Salário",
-                1500.00,
-                LocalDate.now(),
-                Categoria.SALARIO
-        );
-
-        Transacao mercado = TransacaoFactory.criarTransacao(
-                "Despesa",
-                "Compra no mercado",
-                250.00,
-                LocalDate.now(),
-                Categoria.ALIMENTACAO
-        );
-
-        gerenciador.adicionarTransacao(salario);
-        gerenciador.adicionarTransacao(mercado);
-
-        System.out.println("Transações cadastradas:");
-        for (Transacao t : gerenciador.getTransacoes()) {
-            System.out.println(t.getDescricao() + " - R$ " + t.getValorParaSaldo());
-        }
-
-        System.out.println("Saldo total: R$ " + gerenciador.calcularSaldo());
+        launch();
     }
 }
