@@ -3,11 +3,9 @@ package controller;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.beans.property.SimpleStringProperty;
 
 import model.*;
 
@@ -23,6 +21,15 @@ public class MainController {
     private TextField valorField;
 
     @FXML
+    private ComboBox<String> tipoComboBox;
+
+    @FXML
+    private ComboBox<Categoria> categoriaComboBox;
+
+    @FXML
+    private DatePicker dataPicker;
+
+    @FXML
     private TableView<Transacao> tabelaTransacoes;
 
     @FXML
@@ -36,6 +43,9 @@ public class MainController {
 
     @FXML
     private TableColumn<Transacao, Categoria> colCategoria;
+
+    @FXML
+    private TableColumn<Transacao, String> colTipo;
 
     @FXML
     private Label saldoLabel;
@@ -60,7 +70,24 @@ public class MainController {
         colCategoria.setCellValueFactory(
                 new PropertyValueFactory<>("categoria"));
 
+        colTipo.setCellValueFactory(cellData -> {
+            Transacao t = cellData.getValue();
+
+            if (t instanceof Receita) {
+                return new SimpleStringProperty("Receita");
+            } else {
+                return new SimpleStringProperty("Despesa");
+            }
+        });
+
         tabelaTransacoes.setItems(listaTransacoes);
+
+        tipoComboBox.getItems().addAll("Receita", "Despesa");
+        categoriaComboBox.getItems().addAll(Categoria.values());
+
+        tipoComboBox.setValue("Receita");
+        categoriaComboBox.setValue(Categoria.OUTROS);
+        dataPicker.setValue(LocalDate.now());
 
         carregarTransacoes();
     }
@@ -70,45 +97,49 @@ public class MainController {
 
         try {
 
-            String descricao =
-                    descricaoField.getText();
+            String descricao = descricaoField.getText();
+            double valor = Double.parseDouble(valorField.getText());
+            String tipo = tipoComboBox.getValue();
+            Categoria categoria = categoriaComboBox.getValue();
+            LocalDate data = dataPicker.getValue();
 
-            double valor =
-                    Double.parseDouble(
-                            valorField.getText());
+            if (descricao.isBlank() || tipo == null || categoria == null || data == null) {
+                saldoLabel.setText("Preencha todos os campos!");
+                return;
+            }
 
-            Transacao transacao =
-                    new Receita(
-                            descricao,
-                            valor,
-                            LocalDate.now(),
-                            Categoria.OUTROS
-                    );
+            Transacao transacao = TransacaoFactory.criarTransacao(
+                    tipo,
+                    descricao,
+                    valor,
+                    data,
+                    categoria
+            );
 
             listaTransacoes.add(transacao);
 
-            saldo +=
-                    transacao.getValorParaSaldo();
+            saldo += transacao.getValorParaSaldo();
 
             atualizarSaldo();
 
-            PersistenciaTransacoes.salvar(
-                    listaTransacoes);
+            PersistenciaTransacoes.salvar(listaTransacoes);
 
             descricaoField.clear();
             valorField.clear();
+            tipoComboBox.setValue("Receita");
+            categoriaComboBox.setValue(Categoria.OUTROS);
+            dataPicker.setValue(LocalDate.now());
 
         } catch (NumberFormatException e) {
-
-            saldoLabel.setText(
-                    "Digite um valor válido!");
+            saldoLabel.setText("Digite um valor válido!");
+        } catch (Exception e) {
+            saldoLabel.setText("Erro ao adicionar transação!");
         }
     }
 
     private void carregarTransacoes() {
 
-        List<Transacao> transacoes =
-                PersistenciaTransacoes.carregar();
+        List<Transacao> transacoes = PersistenciaTransacoes.carregar();
 
         listaTransacoes.addAll(transacoes);
 
@@ -120,8 +151,6 @@ public class MainController {
     }
 
     private void atualizarSaldo() {
-
-        saldoLabel.setText(
-                "Saldo Total: R$ " + saldo);
+        saldoLabel.setText("Saldo Total: R$ " + saldo);
     }
 }
