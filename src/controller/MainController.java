@@ -9,11 +9,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import model.Categoria;
-import model.Receita;
-import model.Transacao;
+import model.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class MainController {
 
@@ -62,6 +61,8 @@ public class MainController {
                 new PropertyValueFactory<>("categoria"));
 
         tabelaTransacoes.setItems(listaTransacoes);
+
+        carregarTransacoes();
     }
 
     @FXML
@@ -69,24 +70,30 @@ public class MainController {
 
         try {
 
-            String descricao = descricaoField.getText();
+            String descricao =
+                    descricaoField.getText();
 
-            double valor = Double.parseDouble(
-                    valorField.getText());
+            double valor =
+                    Double.parseDouble(
+                            valorField.getText());
 
-            Transacao transacao = new Receita(
-                    descricao,
-                    valor,
-                    LocalDate.now(),
-                    Categoria.OUTROS
-            );
+            Transacao transacao =
+                    new Receita(
+                            descricao,
+                            valor,
+                            LocalDate.now(),
+                            Categoria.OUTROS
+                    );
 
             listaTransacoes.add(transacao);
 
-            saldo += transacao.getValorParaSaldo();
+            saldo +=
+                    transacao.getValorParaSaldo();
 
-            saldoLabel.setText(
-                    "Saldo Total: R$ " + saldo);
+            atualizarSaldo();
+
+            PersistenciaTransacoes.salvar(
+                    listaTransacoes);
 
             descricaoField.clear();
             valorField.clear();
@@ -96,5 +103,25 @@ public class MainController {
             saldoLabel.setText(
                     "Digite um valor válido!");
         }
+    }
+
+    private void carregarTransacoes() {
+
+        List<Transacao> transacoes =
+                PersistenciaTransacoes.carregar();
+
+        listaTransacoes.addAll(transacoes);
+
+        for (Transacao t : transacoes) {
+            saldo += t.getValorParaSaldo();
+        }
+
+        atualizarSaldo();
+    }
+
+    private void atualizarSaldo() {
+
+        saldoLabel.setText(
+                "Saldo Total: R$ " + saldo);
     }
 }
